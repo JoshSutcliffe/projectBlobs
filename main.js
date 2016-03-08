@@ -2,8 +2,8 @@ var $ = require('jquery');
 var _ = require('underscore');
 
 // CREATING SCORES
-var score = 0;
-var scoreText;
+// var score = 0;
+// var scoreText;
 
 // GAME WINDOW DIMENSIONS - EMPTY STRING SELECTS THE DIV TO ATTATCH THE GAME TO, DEFAULT IS BODY
 var game = new Phaser.Game(1100, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
@@ -14,32 +14,34 @@ function preload() {
   game.load.image('star', './assets/star.jpg');
 
   // SCORES
-  scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+  // scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 };
 
+var space;
+var blobSprite;
+var starSprite;
+
 function create() {
+
   // backgrouND
-  game.add.sprite(0, 0, 'space');
+  game.add.tileSprite(0, 0, 1100, 650, 'space');
+  
+  // enable game physics
+  game.physics.startSystem(Phaser.Physics.ARCADE);
 
-  // // Creating a user token
-  // token = game.add.sprite(0, 0, 'blob');
-  // The player and its settings
-  player = game.add.sprite(0, 0, 'blob');
+  // Starting position
+  blobSprite = game.add.sprite(game.world.centerX, game.world.centerY, 'blob');
+  // applying pysics to blob
+  game.physics.enable([blobSprite], Phaser.Physics.ARCADE);
+  // Don't let the little bugger off the screen
+  blobSprite.body.collideWorldBounds = true;
 
-  // // enable game physics
-  // game.physics.startSystem(Phaser.Physics.ARCADE);
+  blobSprite.anchor.setTo(0.5, 0.5);
+  blobSprite.scale.setTo(2, 2);
 
-  // //  We need to enable physics on the player
-  // game.physics.arcade.enable(player);
-
-  // //  Player physics properties. Give the little guy a slight bounce.
-  // player.body.bounce.y = 0.2;
-  // player.body.gravity.y = 300;
-  // player.body.collideWorldBounds = true;
-
-  // //  Our two animations, walking left and right.
-  // player.animations.add('left', [0, 1, 2, 3], 10, true);
-  // player.animations.add('right', [5, 6, 7, 8], 10, true);
+  // moving blob animations
+  blobSprite.animations.add('run');
+  blobSprite.animations.play('run', 10, true);
 
   // // Creating something for the player to collect
   // stars = game.add.group();
@@ -66,7 +68,7 @@ function create() {
 
   //     // Removes the star from the screen
   //     star.kill();
-  
+
     //  Add and update the score
     // score += 10;
     // scoreText.text = 'Score: ' + score;
@@ -107,6 +109,24 @@ function update() {
 
   //   player.frame = 4;
   // }
+
+  if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
+    blobSprite.x -= 4;
+  }
+  else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
+    blobSprite.x += 4;
+  }
+
+  if (game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
+    blobSprite.y -= 4;
+  }
+  else if (game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
+    blobSprite.y += 4;
+  }
 };
 
+function render() {
+    game.debug.spriteInfo(s, 20, 32);
+
+}
 
