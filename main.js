@@ -23,25 +23,32 @@ var starSprite;
 
 function create() {
 
-  // backgrouND
-  game.add.tileSprite(0, 0, 1100, 650, 'space');
-  
-  // enable game physics
-  game.physics.startSystem(Phaser.Physics.ARCADE);
+  // Making the background size
+  game.world.setBounds(0, 0, 2560, 1600);
 
+  game.physics.startSystem(Phaser.Physics.P2JS);
+  game.physics.p2.defaultRestitution = 0.9;
+
+  space = game.add.tileSprite(0, 0, 1100, 650, 'space');
+  space.fixedToCamera = true;
+
+  // To fix
   // Starting position
-  blobSprite = game.add.sprite(game.world.centerX, game.world.centerY, 'blob');
+  // blobSprite = game.add.sprite(game.world.centerX, game.world.centerY, 'blob');
+  // Changing this to the above breaks background image
+  // find a new way to start in the centre
+  blobSprite = game.add.sprite(0, 0, 'blob');
   // applying pysics to blob
-  game.physics.enable([blobSprite], Phaser.Physics.ARCADE);
-  // Don't let the little bugger off the screen
-  blobSprite.body.collideWorldBounds = true;
+  game.physics.p2.enable(blobSprite, false);
 
-  blobSprite.anchor.setTo(0.5, 0.5);
-  blobSprite.scale.setTo(2, 2);
+  game.camera.follow(blobSprite);
+
+  // blobSprite.anchor.setTo(0.5, 0.5);
+  // blobSprite.scale.setTo(2, 2);
 
   // moving blob animations
-  blobSprite.animations.add('run');
-  blobSprite.animations.play('run', 10, true);
+  // blobSprite.animations.add('run');
+  // blobSprite.animations.play('run', 10, true);
 
   // // Creating something for the player to collect
   // stars = game.add.group();
@@ -74,6 +81,8 @@ function create() {
     // scoreText.text = 'Score: ' + score;
 
   // }
+
+  cursors = game.input.keyboard.createCursorKeys();
 
 
 };
@@ -110,23 +119,39 @@ function update() {
   //   player.frame = 4;
   // }
 
-  if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
-    blobSprite.x -= 4;
+  blobSprite.body.setZeroVelocity();
+
+  if (cursors.left.isDown)
+  {
+    blobSprite.body.moveLeft(200);
   }
-  else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
-    blobSprite.x += 4;
+  else if (cursors.right.isDown)
+  {
+    blobSprite.body.moveRight(200);
   }
 
-  if (game.input.keyboard.isDown(Phaser.Keyboard.UP)) {
-    blobSprite.y -= 4;
+  if (cursors.up.isDown)
+  {
+    blobSprite.body.moveUp(200);
   }
-  else if (game.input.keyboard.isDown(Phaser.Keyboard.DOWN)) {
-    blobSprite.y += 4;
+  else if (cursors.down.isDown)
+  {
+    blobSprite.body.moveDown(200);
+  }
+
+  if (!game.camera.atLimit.x)
+  {
+    space.tilePosition.x -= (blobSprite.body.velocity.x * game.time.physicsElapsed);
+  }
+
+  if (!game.camera.atLimit.y)
+  {
+    space.tilePosition.y -= (blobSprite.body.velocity.y * game.time.physicsElapsed);
   }
 };
 
-function render() {
-    game.debug.spriteInfo(s, 20, 32);
+// function render() {
+//     game.debug.spriteInfo(s, 20, 32);
 
-}
+// }
 
