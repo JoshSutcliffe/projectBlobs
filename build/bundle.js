@@ -2,20 +2,14 @@
 var $ = require('jquery');
 var _ = require('underscore');
 
-// CREATING SCORES
-var score = 0;
-var scoreText;
-
-// GAME WINDOW DIMENSIONS - EMPTY STRING SELECTS THE DIV TO ATTATCH THE GAME TO, DEFAULT IS BODY
 var game = new Phaser.Game(1100, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
 function preload() {
+
   game.load.image('background', './assets/space.jpg');
   game.load.image('blob', './assets/blob.jpg');
-  game.load.image('stars', './assets/star.jpg');
+  game.load.image('star', './assets/star.jpg');
 
-  // SCORES
-  scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 };
 
 var background;
@@ -24,64 +18,53 @@ var starSprite;
 var stars;
 var bonusFood;
 
+var randomWidth = Math.floor(Math.random() * 1100 + 1);
+var randomHeight = Math.floor(Math.random() * 650 + 1);
+
+// CREATING SCORES
+var score = 0;
+var scoreText;
+
 function create() {
 
-  // Making the background size
-  game.world.setBounds(0, 0, 2560, 1600);
+  //  This will run in Canvas mode, so let's gain a little speed and display
+  game.renderer.clearBeforeRender = false;
+  game.renderer.roundPixels = true;
 
-  // Enable physics here
-  game.physics.startSystem(Phaser.Physics.P2JS);
-  game.physics.p2.defaultRestitution = 0.9;
+  //  We need arcade physics
+  game.physics.startSystem(Phaser.Physics.ARCADE);
 
-  // Keeping background in place and fit window
-  background = game.add.tileSprite(0, 0, 1100, 650, 'background');
-  background.fixedToCamera = true;
+  //  A spacey background
+  game.add.tileSprite(0, 0, game.width, game.height, 'background');
 
-  // TO FIX
-  // Starting position
-  // blobSprite = game.add.sprite(game.world.centerX, game.world.centerY, 'blob');
-  // Changing this to the above breaks background image
-  // find a new way to start in the centre
-  blobSprite = game.add.sprite(0, 0, 'blob');
-  // applying pysics to blob
-  game.physics.p2.enable(blobSprite, false);
+  //  Our player ship
+  blobSprite = game.add.sprite(300, 300, 'blob');
+  blobSprite.anchor.set(0.5);
 
-  game.camera.follow(blobSprite);
+  //  and its physics settings
+  game.physics.enable(blobSprite, Phaser.Physics.ARCADE);
 
-  // Creating something for the player to collect
-  // stars = game.add.group();
+  // asteroid style movement
+  blobSprite.body.drag.set(100);
+  blobSprite.body.maxVelocity.set(200);
 
-  // game.physics.startSystem(Phaser.Physics.ARCADE);
-
+  //  Finally some stars to collect
+  stars = game.add.group();
+  //  We will enable physics for any star that is created in this group
   // stars.enableBody = true;
+  
+  //  Here we'll create 12 of them evenly spaced apart
+  for (var i = 0; i < 12; i++)
+  {
+      //  Create a star inside of the 'stars' group
+      var star = stars.create(randomWidth, randomHeight, 'star');
+      debugger
+  }
 
-  // //  Here we'll create 12 of them evenly backgroundd apart
-  // for (var i = 0; i < 12; i++) {
-  //   //  Create a star inside of the 'stars' group
-  //   var star = stars.create(i * 70, 0, 'stars');
+  // SCORES
+  scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
 
-  //   //  Let gravity do its thing
-  //   star.body.gravity.y = 6;
-
-  //   //  This just gives each star a slightly random bounce value
-  //   star.body.bounce.y = 0.7 + Math.random() * 0.2;
-  //   debugger
-  // };
-
-  // // CHECK IF THE ICONS ARE OVERLAPPING
-  // game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
-
-  // // REMOVE STAR AFTER ITS BEEN COLLECTED
-  // function collectStar (blobSprite, star) {
-
-  //   // Removes the star from the screen
-  //   star.kill();
-
-  //   // Add and update the score
-  //   score += 10;
-  //   scoreText.text = 'Score: ' + score;
-  // };
-
+  //  Game input
   cursors = game.input.keyboard.createCursorKeys();
 
 };
@@ -89,41 +72,58 @@ function create() {
 
 function update() {
 
-  blobSprite.body.setZeroVelocity();
+  game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
 
-  if (cursors.left.isDown)
-  {
-    blobSprite.body.moveLeft(200);
+  if (cursors.up.isDown) {
+    game.physics.arcade.accelerationFromRotation(blobSprite.rotation, 200, blobSprite.body.acceleration);
   }
-  else if (cursors.right.isDown)
-  {
-    blobSprite.body.moveRight(200);
+  else {
+    blobSprite.body.acceleration.set(0);
   }
 
-  if (cursors.up.isDown)
-  {
-    blobSprite.body.moveUp(200);
+  if (cursors.left.isDown) {
+    blobSprite.body.angularVelocity = -300;
   }
-  else if (cursors.down.isDown)
-  {
-    blobSprite.body.moveDown(200);
+  else if (cursors.right.isDown) {
+    blobSprite.body.angularVelocity = 300;
   }
-
-  if (!game.camera.atLimit.x)
-  {
-    background.tilePosition.x -= (blobSprite.body.velocity.x * game.time.physicsElapsed);
+  else {
+    blobSprite.body.angularVelocity = 0;
   }
 
-  if (!game.camera.atLimit.y)
-  {
-    background.tilePosition.y -= (blobSprite.body.velocity.y * game.time.physicsElapsed);
+  screenWrap(blobSprite);
+
+}
+
+function screenWrap (blobSprite) {
+
+  if (blobSprite.x < 0) {
+    blobSprite.x = game.width;
   }
-};
+  else if (blobSprite.x > game.width) {
+    blobSprite.x = 0;
+  }
 
-// function render() {
-//     game.debug.spriteInfo(s, 20, 32);
+  if (blobSprite.y < 0) {
+    blobSprite.y = game.height;
+  }
+  else if (blobSprite.y > game.height) {
+    blobSprite.y = 0;
+  }
 
-// }
+}
+
+function collectStar (blobSprite, star) {
+  debugger
+    
+    // Removes the star from the screen
+    star.kill();
+    //  Add and update the score
+    score += 10;
+    scoreText.text = 'Score: ' + score;
+}
+
+
 
 
 },{"jquery":2,"underscore":3}],2:[function(require,module,exports){
