@@ -17,12 +17,10 @@ var starSprite;
 var stars;
 var bonusFood;
 
-var randomWidth = Math.floor(Math.random() * 1100 + 1);
-var randomHeight = Math.floor(Math.random() * 650 + 1);
-
 // CREATING SCORES
 var score = 0;
 var scoreText;
+
 
 function create() {
 
@@ -50,14 +48,19 @@ function create() {
   //  Finally some stars to collect
   stars = game.add.group();
   //  We will enable physics for any star that is created in this group
-  // stars.enableBody = true;
-  
+  stars.enableBody = true;
+  // game.physics.enable(stars, Phaser.Physics.ARCADE);
+
   //  Here we'll create 12 of them evenly spaced apart
-  for (var i = 0; i < 12; i++)
-  {
-      //  Create a star inside of the 'stars' group
-      var star = stars.create(randomWidth, randomHeight, 'star');
-      debugger
+  for (var i = 0; i < 1; i++){
+    //  Create a star inside of the 'stars' group
+    var star = stars.create(game.world.randomX, game.world.randomX, 'star');
+
+    // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
+    // cell.game.time.events.loop(3500, function() {
+    //   this.game.add.tween(stars).to({x: this.game.world.randomX, y: this.game.world.randomY}, 1900, Phaser.Easing.Linear.InOut, true);
+     //} //this)
+    // game.physics.enable(cell, Phaser.Physics.ARCADE);
   }
 
   // SCORES
@@ -112,14 +115,21 @@ function screenWrap (blobSprite) {
 
 }
 
-function collectStar (blobSprite, star) {
-  debugger
+function collectStar () {
+    console.log('overlap')
     
     // Removes the star from the screen
-    star.kill();
+    stars.destroy();
     //  Add and update the score
     score += 10;
     scoreText.text = 'Score: ' + score;
+}
+
+function render() {
+
+  // Sprite debug info
+  game.debug.spriteInfo(blobSprite, 32, 32);
+
 }
 
 
