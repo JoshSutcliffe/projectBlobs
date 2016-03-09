@@ -19,6 +19,7 @@ var stars;
 // var bonusFood;
 var nextMovedStar;
 var randomSelection;
+var interval = 3500/20;
 
 // CREATING SCORES
 var score = 0;
@@ -53,7 +54,6 @@ function create() {
   // game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   nextMovedStar = 0;
-  var interval = 3500/20;
 
   //  Here we'll create 12 of them evenly spaced apart
   for (var i = 0; i < 15; i++) {
@@ -65,7 +65,7 @@ function create() {
 
     game.time.events.loop(interval, function() {        
       nextMovedStar = game.rnd.integerInRange(0, 15);
-      this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
+      this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
     }, this);
     game.physics.enable(stars, Phaser.Physics.ARCADE);
 
@@ -101,8 +101,19 @@ function update() {
 
   screenWrap(blobSprite);
 
+  if (score % 150 === 0) {
+    for (var i = 0; i < 15; i++) {
+      //  Create a star inside of the 'stars' group
+      // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
 
+      var star = stars.create(game.world.randomX, game.world.randomY, 'star');
+    }
 
+  game.time.events.loop(interval, function() {        
+    nextMovedStar = game.rnd.integerInRange(16, 30);
+    this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
+  }, this);
+  };
 }
 
 function screenWrap(blobSprite) {
@@ -126,11 +137,28 @@ function screenWrap(blobSprite) {
 // have to pass in which star
 function collectStar (player, star) {    
 
-    star.kill();
-    //  Add and update the score
-    score += 10;
-    scoreText.text = 'Score: ' + score;
+  star.kill();
+  //  Add and update the score
+  score += 10;
+  scoreText.text = 'Score: ' + score;
+
 }
+
+// var collectStars = function() {
+
+//   for (var i = 0; i < 15; i++) {
+//     //  Create a star inside of the 'stars' group
+//     // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
+
+//     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
+//   }
+
+//   game.time.events.loop(interval, function() {        
+//     nextMovedStar = game.rnd.integerInRange(0, 15);
+//     this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
+//   }, this);
+// }
+
 
 function render() {
 
