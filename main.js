@@ -13,14 +13,15 @@ function preload() {
 
 var background;
 var blobSprite;
-var starSprite;
+// var starSprite;
 var stars;
-var bonusFood;
+// var bonusFood;
+var nextMovedStar;
+var randomSelection;
 
 // CREATING SCORES
 var score = 0;
 var scoreText;
-
 
 function create() {
 
@@ -47,24 +48,28 @@ function create() {
 
   //  Finally some stars to collect
   stars = game.add.group();
-  //  We will enable physics for any star that is created in this group
   stars.enableBody = true;
   // game.physics.enable(stars, Phaser.Physics.ARCADE);
 
-  //  Here we'll create 12 of them evenly spaced apart
-  for (var i = 0; i < 1; i++){
-    //  Create a star inside of the 'stars' group
-    var star = stars.create(game.world.randomX, game.world.randomX, 'star');
+  nextMovedStar = 0;
+  var interval = 3500/20;
 
+  //  Here we'll create 12 of them evenly spaced apart
+  for (var i = 0; i < 15; i++) {
+    //  Create a star inside of the 'stars' group
     // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
-    // cell.game.time.events.loop(3500, function() {
-    //   this.game.add.tween(stars).to({x: this.game.world.randomX, y: this.game.world.randomY}, 1900, Phaser.Easing.Linear.InOut, true);
-     //} //this)
-    // game.physics.enable(cell, Phaser.Physics.ARCADE);
+
+    var star = stars.create(game.world.randomX, game.world.randomY, 'star');
   }
 
+    game.time.events.loop(interval, function() {        
+      nextMovedStar = game.rnd.integerInRange(0, 15);
+      this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
+    }, this);
+    game.physics.enable(stars, Phaser.Physics.ARCADE);
+
   // SCORES
-  scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+  scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
 
   //  Game input
   cursors = game.input.keyboard.createCursorKeys();
@@ -95,9 +100,11 @@ function update() {
 
   screenWrap(blobSprite);
 
+
+
 }
 
-function screenWrap (blobSprite) {
+function screenWrap(blobSprite) {
 
   if (blobSprite.x < 0) {
     blobSprite.x = game.width;
