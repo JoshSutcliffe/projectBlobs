@@ -123,11 +123,10 @@ function screenWrap(blobSprite) {
 
 }
 
-function collectStar () {
-    console.log('overlap')
-    
-    // Removes the star from the screen
-    stars.destroy();
+// have to pass in which star
+function collectStar (player, star) {    
+
+    star.kill();
     //  Add and update the score
     score += 10;
     scoreText.text = 'Score: ' + score;
