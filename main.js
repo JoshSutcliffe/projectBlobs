@@ -15,14 +15,19 @@ function preload() {
 
 };
 
+// Creating sprites and groups
 var background;
 var blobSprite;
 var asteroids1;
 var asteroids2;
 var stars;
-var ufos;
 // var bonusFood;
 
+// Controlling the evil chasing ufos
+var ufosAmount = 3;
+var ufos = []; 
+
+// To control movement of asteroids and stars
 var nextMovedStar;
 var nextMovedAsteroid1;
 var nextMovedAsteroid2;
@@ -75,12 +80,19 @@ function create() {
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // Creating asteroids1 timer
-  game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
+  // game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
   // Creating asteroids2 timer
   game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids2, this);
 
-  // UFO timers
-  game.time.events.repeat(Phaser.Timer.SECOND * 2, 10, createUfo, this);
+  // Creating the UFO's
+  for (var i = 0; i < ufosAmount; i++) {
+    ufos[i] = game.add.sprite(game.world.randomX, game.world.randomY, 'ufo');
+    ufos[i].anchor.set(0.5);
+    ufos[i].speed = game.rnd.between(50, 150);
+    ufos[i].force = game.rnd.between(5, 25);
+    game.physics.enable(ufos[i], Phaser.Physics.ARCADE);
+    ufos[i].body.allowRotation = false; 
+  };
 
   // SCORES
   scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -93,10 +105,12 @@ function create() {
 
 function update() {
 
+  // Checking for overlaps
   game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
 
+  // Controlling movements
   if (cursors.up.isDown) {
     game.physics.arcade.accelerationFromRotation(blobSprite.rotation, 200, blobSprite.body.acceleration);
   }
@@ -116,12 +130,41 @@ function update() {
 
   screenWrap(blobSprite);
 
+  // Regenerating stars
   if (stars.length === 0) {
     for (var i = 0; i < 2; i++) {
 
       stars.create(game.world.randomX, game.world.randomY, 'star');
     }
   };
+
+  // Directing my evil ufos at their target
+  for(var i = 0; i < ufosAmount; i++){
+    // direction vector is the straight direction from the boid to the target
+    var direction = new Phaser.Point(blobSprite.x, blobSprite.y);
+    // now we subtract the current boid position
+    direction.subtract(ufos[i].x, ufos[i].y);
+    // then we normalize it. A normalized vector has its length is 1, but it retains the same direction
+    direction.normalize();
+    // time to set magnitude (length) to boid speed
+    direction.setMagnitude(ufos[i].speed);
+    // now we subtract the current boid velocity
+    direction.subtract(ufos[i].body.velocity.x, ufos[i].body.velocity.y);
+    // normalizing again
+    direction.normalize();
+    // finally we set the magnitude to boid force, which should be WAY lower than its velocity
+    direction.setMagnitude(ufos[i].force); 
+    // Now we add boid direction to current boid velocity
+    ufos[i].body.velocity.add(direction.x, direction.y);
+    // we normalize the velocity
+    ufos[i].body.velocity.normalize();
+    // we set the magnitue to boid speed
+    ufos[i].body.velocity.setMagnitude(ufos[i].speed);
+    ufos[i].angle = 180 + Phaser.Math.radToDeg(Phaser.Point.angle(ufos[i].position, new Phaser.Point(ufos[i].x + ufos[i].body.velocity.x, ufos[i].y + ufos[i].body.velocity.y)));
+    if(ufos[i].position.distance(blobSprite.position) < 2){
+      gameOver();
+    }
+  }
 }
 
 function screenWrap(blobSprite) {
@@ -175,19 +218,11 @@ function createAsteroids2() {
   game.physics.enable(asteroids2, Phaser.Physics.ARCADE);
 
   // This shoots the object at the blob
-    asteroids2.forEachAlive(function(chase) {
+  asteroids2.forEachAlive(function(chase) {
     game.physics.arcade.moveToObject(chase, {x: blobSprite.x, y: blobSprite.y}, 200, this);
   }, this);
 
 };
-
-function createUfo() {
-  ufos = game.add.group();
-  console.log('creating ufo');
-  var ufo = ufos.create(game.world.randomX, game.world.randomY, 'ufo');
-
-
-}
 
 function gameOver() {
   console.log('game over')
