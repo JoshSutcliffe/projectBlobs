@@ -24,9 +24,6 @@ var interval = 3500/20;
 var score = 0;
 var scoreText;
 
-var starRangeLow = 0;
-var starRangeHigh = 15; 
-
 function create() {
 
   //  This will run in Canvas mode, so let's gain a little speed and display
@@ -36,36 +33,31 @@ function create() {
   //  We need arcade physics
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
-  //  A spacey background
+  // background
   game.add.tileSprite(0, 0, game.width, game.height, 'background');
 
-  //  Our player ship
+  //  player sprite
   blobSprite = game.add.sprite(300, 300, 'blob');
   blobSprite.anchor.set(0.5);
-
-  //  and its physics settings
   game.physics.enable(blobSprite, Phaser.Physics.ARCADE);
 
   // asteroid style movement
   blobSprite.body.drag.set(300);
   blobSprite.body.maxVelocity.set(600);
 
-  //  Finally some stars to collect
+  //  Creating stars group
   stars = game.add.group();
   stars.enableBody = true;
-  // game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   nextMovedStar = 0;
 
   //  Here we'll create 12 of them evenly spaced apart
   for (var i = 0; i < 2; i++) {
     //  Create a star inside of the 'stars' group
-    // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
-
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
   }
 
-
+  // Make the little buggers move about
   game.time.events.loop(interval, function() {        
     nextMovedStar = game.rnd.integerInRange(0, stars.length);
     this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
@@ -104,12 +96,8 @@ function update() {
   }
 
   screenWrap(blobSprite);
-  console.log(stars.length);
 
-
-  // debugger
   if (stars.length === 0) {
-    console.log('zero')
     for (var i = 0; i < 2; i++) {
 
       stars.create(game.world.randomX, game.world.randomY, 'star');
@@ -119,8 +107,6 @@ function update() {
     //   nextMovedStar = game.rnd.integerInRange(starRangeLow, starRangeHigh);
     //   this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
     //   }, this);
-    // starRangeLow = starRangeLow + 15;
-    // starRangeHigh = starRangeHigh + 15;
   };
 }
 
@@ -145,29 +131,15 @@ function screenWrap(blobSprite) {
 // have to pass in which star
 function collectStar (player, star) {    
 
-
+  // Now that the individual star is passed in and not a group, 
+  // destroy will now work and remove star from the collection
+  // Better than .kill() which keeps it in the collection
   star.destroy();
   //  Add and update the score
   score += 10;
   scoreText.text = 'Score: ' + score;
 
 }
-
-// var collectStars = function() {
-
-//   for (var i = 0; i < 15; i++) {
-//     //  Create a star inside of the 'stars' group
-//     // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
-
-//     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
-//   }
-
-//   game.time.events.loop(interval, function() {        
-//     nextMovedStar = game.rnd.integerInRange(0, 15);
-//     this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
-//   }, this);
-// }
-
 
 function render() {
 
