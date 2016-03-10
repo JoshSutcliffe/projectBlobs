@@ -21,6 +21,7 @@ var blobSprite;
 var asteroids1;
 var asteroids2;
 var stars;
+var ufos;
 // var bonusFood;
 
 var nextMovedStar;
@@ -78,6 +79,9 @@ function create() {
   game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
   // Creating asteroids2 timer
   game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids2, this);
+
+  // UFO timers
+  game.time.events.repeat(Phaser.Timer.SECOND * 2, 10, createUfo, this);
 
   // SCORES
   scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -154,7 +158,6 @@ function collectStar (player, star) {
 
 function createAsteroids1() {
   asteroids1 = game.add.group();
-  console.log('creating asteroid1');
   var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
 
   // Make the little buggers move about
@@ -168,17 +171,24 @@ function createAsteroids1() {
 
 function createAsteroids2() {
   asteroids2 = game.add.group();
-  console.log('creating asteroid2');
   var asteroid2 = asteroids2.create(game.world.randomX, game.world.randomY, 'asteroid2');
 
-  // Make the little buggers move about
-  game.time.events.loop(interval, function() {        
-    nextMovedAsteroid2 = game.rnd.integerInRange(0, asteroids2.length);
-    this.game.add.tween(asteroids2.getAt(nextMovedAsteroid2)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
+  game.physics.enable(asteroids2, Phaser.Physics.ARCADE);
+
+  // This shoots the object at the blob
+    asteroids2.forEachAlive(function(chase) {
+    game.physics.arcade.moveToObject(chase, {x: blobSprite.x, y: blobSprite.y}, 200, this);
   }, this);
 
-  game.physics.enable(asteroids2, Phaser.Physics.ARCADE);
 };
+
+function createUfo() {
+  ufos = game.add.group();
+  console.log('creating ufo');
+  var ufo = ufos.create(game.world.randomX, game.world.randomY, 'ufo');
+
+
+}
 
 function gameOver() {
   console.log('game over')
