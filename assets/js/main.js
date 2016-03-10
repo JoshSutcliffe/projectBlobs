@@ -15,6 +15,7 @@ function preload() {
   game.load.image('asteroid1', './assets/images/asteroids.jpg');
   game.load.image('asteroid2', './assets/images/Asteroids-icon.jpg');
   game.load.image('ufo', './assets/images/UFO-icon.jpg');
+  game.load.image('start', './assets/images/diggonaut-start.png');
 
 };
 
@@ -73,7 +74,7 @@ function create() {
   nextMovedStar = 0;
 
   //  Creating Stars
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < 5; i++) {
     //  Create a star inside of the 'stars' group
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
   }
@@ -87,7 +88,7 @@ function create() {
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // Creating asteroids1 timer
-  game.time.events.repeat(Phaser.Timer.SECOND * 52, 10, createAsteroids1, this);
+  game.time.events.repeat(Phaser.Timer.SECOND * 38, 10, createAsteroids1, this);
   // Creating asteroids2 timer
   game.time.events.loop(Phaser.Timer.SECOND * 15, createAsteroids2, this);
 
@@ -107,7 +108,7 @@ function create() {
   // Enable keys to work
   cursors = game.input.keyboard.createCursorKeys();
 
-  startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'button', startGame, this, 1, 0, 2);
+  startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'start', startGame, this, 1, 0, 2);
   startButton.anchor.set(0.5);
 
 };
