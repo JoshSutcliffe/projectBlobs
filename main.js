@@ -10,6 +10,8 @@ function preload() {
   game.load.image('star', './assets/star.jpg');
   game.load.image('asteroid1', './assets/asteroids.jpg');
   game.load.image('asteroid2', './assets/Asteroids-icon.jpg');
+  game.load.image('asteroid2', './assets/Asteroids-icon.jpg');
+  game.load.image('ufo', './assets/UFO-icon.jpg');
 
 };
 
@@ -150,17 +152,17 @@ function collectStar (player, star) {
 }
 
 function createAsteroids1() {
-  // asteroids1 = game.add.group();
-  // console.log('creating asteroid1');
-  // var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
+  asteroids1 = game.add.group();
+  console.log('creating asteroid1');
+  var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
 
-  // // Make the little buggers move about
-  // game.time.events.loop(interval, function() {        
-  //   nextMovedAsteroid1 = game.rnd.integerInRange(0, asteroids1.length);
-  //   this.game.add.tween(asteroids1.getAt(nextMovedAsteroid1)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
-  // }, this);
+  // Make the little buggers move about
+  game.time.events.loop(interval, function() {        
+    nextMovedAsteroid1 = game.rnd.integerInRange(0, asteroids1.length);
+    this.game.add.tween(asteroids1.getAt(nextMovedAsteroid1)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
+  }, this);
 
-  // game.physics.enable(asteroids1, Phaser.Physics.ARCADE);
+  game.physics.enable(asteroids1, Phaser.Physics.ARCADE);
 };
 
 function createAsteroids2() {
