@@ -145,7 +145,7 @@ function update() {
 
     // Regenerating stars
     if (stars.length === 0) {
-      for (var i = 0; i < 2; i++) {
+      for (var i = 0; i < 5; i++) {
 
         stars.create(game.world.randomX, game.world.randomY, 'star');
       }
