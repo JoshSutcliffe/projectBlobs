@@ -4,15 +4,19 @@ var _ = require('underscore');
 
 var game = new Phaser.Game(1100, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
+// game.state.add('Menu', Menu);
+
+// game.state.start('Menu');
+
 function preload() {
 
-  game.load.image('background', './assets/space.jpg');
-  game.load.image('blob', './assets/blob.jpg');
-  game.load.image('star', './assets/star.jpg');
-  game.load.image('asteroid1', './assets/asteroids.jpg');
-  game.load.image('asteroid2', './assets/Asteroids-icon.jpg');
-  game.load.image('asteroid2', './assets/Asteroids-icon.jpg');
-  game.load.image('ufo', './assets/UFO-icon.jpg');
+  game.load.image('background', './assets/images/space.jpg');
+  game.load.image('blob', './assets/images/spaceship1_final.jpg');
+  game.load.image('star', './assets/images/star.jpg');
+  game.load.image('asteroid1', './assets/images/asteroids.jpg');
+  game.load.image('asteroid2', './assets/images/Asteroids-icon.jpg');
+  game.load.image('ufo', './assets/images/UFO-icon.jpg');
+  game.load.image('start', './assets/images/diggonaut-start.png');
 
 };
 
@@ -23,6 +27,10 @@ var asteroids1;
 var asteroids2;
 var stars;
 // var bonusFood;
+
+// controlling game start
+var startButton;
+var playing = false;
 
 // Controlling the evil chasing ufos
 var ufosAmount = 3;
@@ -67,7 +75,7 @@ function create() {
   nextMovedStar = 0;
 
   //  Creating Stars
-  for (var i = 0; i < 2; i++) {
+  for (var i = 0; i < 5; i++) {
     //  Create a star inside of the 'stars' group
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
   }
@@ -81,9 +89,9 @@ function create() {
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // Creating asteroids1 timer
-  game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
+  game.time.events.repeat(Phaser.Timer.SECOND * 38, 10, createAsteroids1, this);
   // Creating asteroids2 timer
-  game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids2, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 15, createAsteroids2, this);
 
   // Creating the UFO's
   for (var i = 0; i < ufosAmount; i++) {
@@ -101,6 +109,9 @@ function create() {
   // Enable keys to work
   cursors = game.input.keyboard.createCursorKeys();
 
+  startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'start', startGame, this, 1, 0, 2);
+  startButton.anchor.set(0.5);
+
 };
 
 
@@ -110,62 +121,62 @@ function update() {
   game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
+  game.physics.arcade.overlap(blobSprite, ufos, gameOver, null, this);
 
-  // Controlling movements
-  if (cursors.up.isDown) {
-    game.physics.arcade.accelerationFromRotation(blobSprite.rotation, 200, blobSprite.body.acceleration);
-  }
-  else {
-    blobSprite.body.acceleration.set(0);
-  }
+  if (playing) {
+    // Controlling movements
+    if (cursors.up.isDown) {
+      game.physics.arcade.accelerationFromRotation(blobSprite.rotation, 200, blobSprite.body.acceleration);
+    }
+    else {
+      blobSprite.body.acceleration.set(0);
+    }
 
-  if (cursors.left.isDown) {
-    blobSprite.body.angularVelocity = -300;
-  }
-  else if (cursors.right.isDown) {
-    blobSprite.body.angularVelocity = 300;
-  }
-  else {
-    blobSprite.body.angularVelocity = 0;
-  }
+    if (cursors.left.isDown) {
+      blobSprite.body.angularVelocity = -300;
+    }
+    else if (cursors.right.isDown) {
+      blobSprite.body.angularVelocity = 300;
+    }
+    else {
+      blobSprite.body.angularVelocity = 0;
+    }
 
-  screenWrap(blobSprite);
+    screenWrap(blobSprite);
 
-  // Regenerating stars
-  if (stars.length === 0) {
-    for (var i = 0; i < 2; i++) {
+    // Regenerating stars
+    if (stars.length === 0) {
+      for (var i = 0; i < 2; i++) {
 
-      stars.create(game.world.randomX, game.world.randomY, 'star');
+        stars.create(game.world.randomX, game.world.randomY, 'star');
+      }
+    };
+
+    // Directing my evil ufos at their target
+    for(var i = 0; i < ufosAmount; i++){
+      // direction vector is the straight direction from the boid to the target
+      var direction = new Phaser.Point(blobSprite.x, blobSprite.y);
+      // now we subtract the current boid position
+      direction.subtract(ufos[i].x, ufos[i].y);
+      // then we normalize it. A normalized vector has its length is 1, but it retains the same direction
+      direction.normalize();
+      // time to set magnitude (length) to boid speed
+      direction.setMagnitude(ufos[i].speed);
+      // now we subtract the current boid velocity
+      direction.subtract(ufos[i].body.velocity.x, ufos[i].body.velocity.y);
+      // normalizing again
+      direction.normalize();
+      // finally we set the magnitude to boid force, which should be WAY lower than its velocity
+      direction.setMagnitude(ufos[i].force); 
+      // Now we add boid direction to current boid velocity
+      ufos[i].body.velocity.add(direction.x, direction.y);
+      // we normalize the velocity
+      ufos[i].body.velocity.normalize();
+      // we set the magnitue to boid speed
+      ufos[i].body.velocity.setMagnitude(ufos[i].speed);
+      ufos[i].angle = 180 + Phaser.Math.radToDeg(Phaser.Point.angle(ufos[i].position, new Phaser.Point(ufos[i].x + ufos[i].body.velocity.x, ufos[i].y + ufos[i].body.velocity.y)));
     }
   };
-
-  // Directing my evil ufos at their target
-  for(var i = 0; i < ufosAmount; i++){
-    // direction vector is the straight direction from the boid to the target
-    var direction = new Phaser.Point(blobSprite.x, blobSprite.y);
-    // now we subtract the current boid position
-    direction.subtract(ufos[i].x, ufos[i].y);
-    // then we normalize it. A normalized vector has its length is 1, but it retains the same direction
-    direction.normalize();
-    // time to set magnitude (length) to boid speed
-    direction.setMagnitude(ufos[i].speed);
-    // now we subtract the current boid velocity
-    direction.subtract(ufos[i].body.velocity.x, ufos[i].body.velocity.y);
-    // normalizing again
-    direction.normalize();
-    // finally we set the magnitude to boid force, which should be WAY lower than its velocity
-    direction.setMagnitude(ufos[i].force); 
-    // Now we add boid direction to current boid velocity
-    ufos[i].body.velocity.add(direction.x, direction.y);
-    // we normalize the velocity
-    ufos[i].body.velocity.normalize();
-    // we set the magnitue to boid speed
-    ufos[i].body.velocity.setMagnitude(ufos[i].speed);
-    ufos[i].angle = 180 + Phaser.Math.radToDeg(Phaser.Point.angle(ufos[i].position, new Phaser.Point(ufos[i].x + ufos[i].body.velocity.x, ufos[i].y + ufos[i].body.velocity.y)));
-    if(ufos[i].position.distance(blobSprite.position) < 2){
-      gameOver();
-    }
-  }
 }
 
 function screenWrap(blobSprite) {
@@ -226,8 +237,18 @@ function createAsteroids2() {
 };
 
 function gameOver() {
-  console.log('game over')
-}
+  // game.state.start('Game_Over');
+  alert('You lost, game over!');
+  location.reload();
+};
+
+function startGame() {
+  startButton.destroy();
+  // ball.body.velocity.set(150, -150);
+  playing = true;
+};
+
+// game.state.add('Game_Over', game_over);
 
 
 

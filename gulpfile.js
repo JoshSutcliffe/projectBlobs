@@ -13,20 +13,12 @@ gulp.task('server', function() {
 });
 
 // BUNDLING
-var bld = watchify(browserify('./main.js'));
+var bld = watchify(browserify('./assets/js/main.js'));
 gulp.task('bundle', function() {
   return bld.bundle()
   .pipe( source('bundle.js') )
-  .pipe( gulp.dest('build') )
-  .pipe( connect.reload() );
-});
-
-var g_o = watchify(browserify('./game_over.js'));
-gulp.task('bundle', function() {
-  return g_o.bundle()
-  .pipe( source('game_over.js') )
-  .pipe( gulp.dest('build') )
-  .pipe( connect.reload() );
+  .pipe( gulp.dest('build') );
+  // .pipe( connect.reload() );
 });
 
 // LINTING
@@ -46,7 +38,7 @@ gulp.task('bundle', function() {
 //   .pipe( connect.reload() );
 // });
 
-gulp.task('watch', function() {
+gulp.task('watch', ['bundle'], function() {
   gulp.watch('./scss/*.scss', ['sass']);
   gulp.watch('./*.js', ['bundle']);
 });
