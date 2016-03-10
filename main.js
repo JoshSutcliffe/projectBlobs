@@ -24,6 +24,9 @@ var interval = 3500/20;
 var score = 0;
 var scoreText;
 
+var starRangeLow = 0;
+var starRangeHigh = 15; 
+
 function create() {
 
   //  This will run in Canvas mode, so let's gain a little speed and display
@@ -44,8 +47,8 @@ function create() {
   game.physics.enable(blobSprite, Phaser.Physics.ARCADE);
 
   // asteroid style movement
-  blobSprite.body.drag.set(100);
-  blobSprite.body.maxVelocity.set(200);
+  blobSprite.body.drag.set(300);
+  blobSprite.body.maxVelocity.set(600);
 
   //  Finally some stars to collect
   stars = game.add.group();
@@ -55,18 +58,20 @@ function create() {
   nextMovedStar = 0;
 
   //  Here we'll create 12 of them evenly spaced apart
-  for (var i = 0; i < 15; i++) {
+  for (var i = 0; i < 2; i++) {
     //  Create a star inside of the 'stars' group
     // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
 
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
   }
 
-    game.time.events.loop(interval, function() {        
-      nextMovedStar = game.rnd.integerInRange(0, 15);
-      this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
-    }, this);
-    game.physics.enable(stars, Phaser.Physics.ARCADE);
+
+  game.time.events.loop(interval, function() {        
+    nextMovedStar = game.rnd.integerInRange(0, stars.length);
+    this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY}, 19000, Phaser.Easing.Linear.InOut, true);
+  }, this);
+
+  game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // SCORES
   scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
@@ -99,19 +104,23 @@ function update() {
   }
 
   screenWrap(blobSprite);
+  console.log(stars.length);
 
-  if (score % 150 === 0) {
-    for (var i = 0; i < 15; i++) {
-      //  Create a star inside of the 'stars' group
-      // var star = stars.create(game.world.randomX, game.world.randomX, 'star');
 
-      var star = stars.create(game.world.randomX, game.world.randomY, 'star');
+  // debugger
+  if (stars.length === 0) {
+    console.log('zero')
+    for (var i = 0; i < 2; i++) {
+
+      stars.create(game.world.randomX, game.world.randomY, 'star');
     }
 
-  game.time.events.loop(interval, function() {        
-    nextMovedStar = game.rnd.integerInRange(16, 30);
-    this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
-  }, this);
+    // game.time.events.loop(interval, function() {       
+    //   nextMovedStar = game.rnd.integerInRange(starRangeLow, starRangeHigh);
+    //   this.game.add.tween(stars.getAt(nextMovedStar)).to({x: this.game.world.randomX, y: this.game.world.randomY},        19000, Phaser.Easing.Linear.InOut, true);
+    //   }, this);
+    // starRangeLow = starRangeLow + 15;
+    // starRangeHigh = starRangeHigh + 15;
   };
 }
 
@@ -136,7 +145,8 @@ function screenWrap(blobSprite) {
 // have to pass in which star
 function collectStar (player, star) {    
 
-  star.kill();
+
+  star.destroy();
   //  Add and update the score
   score += 10;
   scoreText.text = 'Score: ' + score;
