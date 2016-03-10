@@ -80,7 +80,7 @@ function create() {
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // Creating asteroids1 timer
-  // game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
+  game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
   // Creating asteroids2 timer
   game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids2, this);
 
@@ -109,6 +109,8 @@ function update() {
   game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
+  game.physics.arcade.overlap(blobSprite, ufos, gameOver, null, this);
+
 
   // Controlling movements
   if (cursors.up.isDown) {
@@ -161,9 +163,6 @@ function update() {
     // we set the magnitue to boid speed
     ufos[i].body.velocity.setMagnitude(ufos[i].speed);
     ufos[i].angle = 180 + Phaser.Math.radToDeg(Phaser.Point.angle(ufos[i].position, new Phaser.Point(ufos[i].x + ufos[i].body.velocity.x, ufos[i].y + ufos[i].body.velocity.y)));
-    if(ufos[i].position.distance(blobSprite.position) < 2){
-      gameOver();
-    }
   }
 }
 
@@ -225,8 +224,10 @@ function createAsteroids2() {
 };
 
 function gameOver() {
-  console.log('game over')
+  game.state.start('Game_Over');
 }
+
+game.state.add('Game_Over', game_over);
 
 
 

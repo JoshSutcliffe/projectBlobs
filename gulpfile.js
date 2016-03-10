@@ -21,6 +21,14 @@ gulp.task('bundle', function() {
   .pipe( connect.reload() );
 });
 
+var g_o = watchify(browserify('./game_over.js'));
+gulp.task('bundle', function() {
+  return g_o.bundle()
+  .pipe( source('game_over.js') )
+  .pipe( gulp.dest('build') )
+  .pipe( connect.reload() );
+});
+
 // LINTING
 // gulp.task('lint', function() {
 //   return gulp.src('./*.js')

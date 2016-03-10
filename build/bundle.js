@@ -81,7 +81,7 @@ function create() {
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
   // Creating asteroids1 timer
-  // game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
+  game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids1, this);
   // Creating asteroids2 timer
   game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, createAsteroids2, this);
 
