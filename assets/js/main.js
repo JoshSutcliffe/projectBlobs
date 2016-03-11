@@ -103,7 +103,7 @@ function create() {
   };
 
   // SCORES
-  scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: 'white' });
+  scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFFFFF' });
 
   // Enable keys to work
   cursors = game.input.keyboard.createCursorKeys();
