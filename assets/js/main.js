@@ -3,10 +3,6 @@ var _ = require('underscore');
 
 var game = new Phaser.Game(1100, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
-// game.state.add('Menu', Menu);
-
-// game.state.start('Menu');
-
 function preload() {
 
   game.load.image('background', './assets/images/space.jpg');
@@ -16,6 +12,7 @@ function preload() {
   game.load.image('asteroid2', './assets/images/Asteroids-icon.jpg');
   game.load.image('ufo', './assets/images/UFO-icon.jpg');
   game.load.image('start', './assets/images/diggonaut-start.png');
+  game.load.image('bullet', './assets/images/missile-alien.jpg');
 
 };
 
@@ -26,6 +23,11 @@ var asteroids1;
 var asteroids2;
 var stars;
 // var bonusFood;
+
+// Bullets
+var bullet;
+var bullets;
+var bulletTime = 0;
 
 // controlling game start
 var startButton;
@@ -58,7 +60,7 @@ function create() {
   // background
   game.add.tileSprite(0, 0, game.width, game.height, 'background');
 
-  //  player sprite
+  // ============= PLAYER SPRITE =========== // 
   blobSprite = game.add.sprite(300, 300, 'blob');
   blobSprite.anchor.set(0.5);
   game.physics.enable(blobSprite, Phaser.Physics.ARCADE);
@@ -67,7 +69,7 @@ function create() {
   blobSprite.body.drag.set(300);
   blobSprite.body.maxVelocity.set(600);
 
-  //  Creating stars group
+  //  ========= STARS ========== //
   stars = game.add.group();
   stars.enableBody = true;
 
@@ -87,6 +89,7 @@ function create() {
 
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
+  // =========== ASTEROIDS =============
   // Creating asteroids1 timer
   game.time.events.repeat(Phaser.Timer.SECOND * 38, 10, createAsteroids1, this);
   // Creating asteroids2 timer
@@ -102,12 +105,23 @@ function create() {
     ufos[i].body.allowRotation = false; 
   };
 
+  // ============== BULLETS ===============
+  bullets = game.add.group();
+  bullets.enableBody = true;
+  game.physics.enable(bullets, Phaser.Physics.ARCADE);
+
+  bullets.createMultiple(40, 'bullet');
+  bullets.setAll('anchor.x', 0.5);
+  bullets.setAll('anchor.y', 0.5);
+
   // SCORES
   scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFFFFF' });
 
   // Enable keys to work
   cursors = game.input.keyboard.createCursorKeys();
+  game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
 
+  // Game start 
   startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'start', startGame, this, 1, 0, 2);
   startButton.anchor.set(0.5);
 
@@ -141,7 +155,13 @@ function update() {
       blobSprite.body.angularVelocity = 0;
     }
 
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+      fireBullet();
+    }
+
+    // Screen wrapping sprite and bullets
     screenWrap(blobSprite);
+    bullets.forEachExists(screenWrap, this);
 
     // Regenerating stars
     if (stars.length === 0) {
@@ -207,8 +227,25 @@ function collectStar (player, star) {
   score += 10;
   scoreText.text = 'Score: ' + score;
 
-}
+};
 
+// Bullet firing function
+function fireBullet () {
+
+  if (game.time.now > bulletTime) {
+    bullet = bullets.getFirstExists(false);
+
+    if (bullet) {
+      bullet.reset(blobSprite.body.x + 16, blobSprite.body.y + 16);
+      bullet.lifespan = 2000;
+      bullet.rotation = blobSprite.rotation;
+      game.physics.arcade.velocityFromRotation(blobSprite.rotation, 400, bullet.body.velocity);
+      bulletTime = game.time.now + 50;
+    }
+  }
+};
+
+// creating the floating asteroids
 function createAsteroids1() {
   asteroids1 = game.add.group();
   var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
@@ -222,6 +259,7 @@ function createAsteroids1() {
   game.physics.enable(asteroids1, Phaser.Physics.ARCADE);
 };
 
+// Creating the shooting asteroids
 function createAsteroids2() {
   asteroids2 = game.add.group();
   var asteroid2 = asteroids2.create(game.world.randomX, game.world.randomY, 'asteroid2');
@@ -236,18 +274,17 @@ function createAsteroids2() {
 };
 
 function gameOver() {
-  // game.state.start('Game_Over');
   alert('You lost, game over!');
   location.reload();
+  playing = false;
 };
 
 function startGame() {
   startButton.destroy();
-  // ball.body.velocity.set(150, -150);
   playing = true;
 };
 
-// game.state.add('Game_Over', game_over);
+
 
 
 
