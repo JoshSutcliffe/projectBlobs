@@ -26,22 +26,19 @@ var stars;
 // var bonusFood;
 
 // Bullets
-var bullet;
+// var bullet;
 var bullets;
 var bulletTime = 0;
 
 // controlling game start
 var startButton;
 var playing = false;
-
-// Controlling the evil chasing ufos
-var ufosAmount = 2;
-var ufos = []; 
+var fireRate = 100;
+var nextFire = 0;
 
 // To control movement of asteroids and stars
 var nextMovedStar;
 var nextMovedAsteroid1;
-var nextMovedAsteroid2;
 var randomSelection;
 var interval = 3500/20;
 
@@ -51,11 +48,11 @@ var scoreText;
 
 function create() {
 
-  //  This will run in Canvas mode, so let's gain a little speed and display
+  //  Canvas display
   game.renderer.clearBeforeRender = false;
   game.renderer.roundPixels = true;
 
-  //  We need arcade physics
+  //  arcade physics
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
   // background
@@ -80,7 +77,7 @@ function create() {
   for (var i = 0; i < 5; i++) {
     //  Create a star inside of the 'stars' group
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
-  }
+  };
 
   // Make the little buggers move about
   game.time.events.loop(interval, function() {        
@@ -92,14 +89,16 @@ function create() {
 
   // =========== ASTEROIDS =============
   // Creating asteroids1 timer
-  game.time.events.loop(Phaser.Timer.SECOND * 6, createAsteroids1, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 3, createAsteroids1, this);
+  asteroids1 = game.add.group();
   // Creating asteroids2 timer
-  game.time.events.loop(Phaser.Timer.SECOND * 15, createAsteroids2, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 5, createAsteroids2, this);
+  asteroids2 = game.add.group();
 
   // ============== BULLETS ===============
   bullets = game.add.group();
   bullets.enableBody = true;
-  game.physics.enable(bullets, Phaser.Physics.ARCADE);
+  bullets.physicsBodyType = Phaser.Physics.ARCADE;
 
   bullets.createMultiple(40, 'bullet');
   bullets.setAll('anchor.x', 0.5);
@@ -125,6 +124,10 @@ function update() {
   game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
+
+  // overlaps with bullets
+  game.physics.arcade.overlap(bullets, asteroids1, destroyAsteroid1, null, this);
+  game.physics.arcade.overlap(bullets, asteroids2, destroyAsteroid2, null, this);
 
   if (playing) {
     // Controlling movements
@@ -161,7 +164,7 @@ function update() {
       }
     };
   };
-}
+};
 
 function screenWrap(blobSprite) {
 
@@ -198,7 +201,7 @@ function collectStar (player, star) {
 function fireBullet () {
 
   if (game.time.now > bulletTime) {
-    bullet = bullets.getFirstExists(false);
+    var bullet = bullets.getFirstExists(false);
 
     if (bullet) {
       bullet.reset(blobSprite.body.x + 16, blobSprite.body.y + 16);
@@ -212,7 +215,6 @@ function fireBullet () {
 
 // creating the floating asteroids
 function createAsteroids1() {
-  asteroids1 = game.add.group();
   var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
 
   // Make the little buggers move about
@@ -226,19 +228,32 @@ function createAsteroids1() {
 
 // Creating the shooting asteroids
 function createAsteroids2() {
-  asteroids2 = game.add.group();
   var asteroid2 = asteroids2.create(game.world.randomX, game.world.randomY, 'asteroid2');
 
   game.physics.enable(asteroids2, Phaser.Physics.ARCADE);
 
   // This shoots the object at the blob
-  asteroids2.forEachAlive(function(chase) {
-    game.physics.arcade.moveToObject(chase, {x: blobSprite.x, y: blobSprite.y}, 200, this);
+  asteroids2.forEachAlive(function(shoot) {
+    game.physics.arcade.moveToObject(shoot, {x: blobSprite.x, y: blobSprite.y}, 200, this);
   }, this);
 
 };
 
+function destroyAsteroid1(bullet, asteroid) {
+
+  console.log('destroy function called');
+  asteroid.destroy();
+
+};
+
+function destroyAsteroid2(bullet, asteroid) {
+
+  asteroid.destroy();
+
+};
+
 function gameOver() {
+  console.log('game over');
   alert('You lost, game over!');
   location.reload();
   playing = false;
