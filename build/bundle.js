@@ -4,10 +4,6 @@ var _ = require('underscore');
 
 var game = new Phaser.Game(1100, 650, Phaser.AUTO, '', { preload: preload, create: create, update: update });
 
-// game.state.add('Menu', Menu);
-
-// game.state.start('Menu');
-
 function preload() {
 
   game.load.image('background', './assets/images/space.jpg');
@@ -17,6 +13,7 @@ function preload() {
   game.load.image('asteroid2', './assets/images/Asteroids-icon.jpg');
   game.load.image('ufo', './assets/images/UFO-icon.jpg');
   game.load.image('start', './assets/images/diggonaut-start.png');
+  game.load.image('bullet', './assets/images/missile-alien.jpg');
 
 };
 
@@ -26,20 +23,22 @@ var blobSprite;
 var asteroids1;
 var asteroids2;
 var stars;
+var ufos;
 // var bonusFood;
+
+// Bullets
+var bullets;
+var bulletTime = 0;
 
 // controlling game start
 var startButton;
 var playing = false;
-
-// Controlling the evil chasing ufos
-var ufosAmount = 3;
-var ufos = []; 
+var fireRate = 100;
+var nextFire = 0;
 
 // To control movement of asteroids and stars
 var nextMovedStar;
 var nextMovedAsteroid1;
-var nextMovedAsteroid2;
 var randomSelection;
 var interval = 3500/20;
 
@@ -49,17 +48,17 @@ var scoreText;
 
 function create() {
 
-  //  This will run in Canvas mode, so let's gain a little speed and display
+  //  Canvas display
   game.renderer.clearBeforeRender = false;
   game.renderer.roundPixels = true;
 
-  //  We need arcade physics
+  //  arcade physics
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
   // background
   game.add.tileSprite(0, 0, game.width, game.height, 'background');
 
-  //  player sprite
+  // ============= PLAYER SPRITE =========== // 
   blobSprite = game.add.sprite(300, 300, 'blob');
   blobSprite.anchor.set(0.5);
   game.physics.enable(blobSprite, Phaser.Physics.ARCADE);
@@ -68,7 +67,7 @@ function create() {
   blobSprite.body.drag.set(300);
   blobSprite.body.maxVelocity.set(600);
 
-  //  Creating stars group
+  //  ========= STARS ========== //
   stars = game.add.group();
   stars.enableBody = true;
 
@@ -78,7 +77,7 @@ function create() {
   for (var i = 0; i < 5; i++) {
     //  Create a star inside of the 'stars' group
     var star = stars.create(game.world.randomX, game.world.randomY, 'star');
-  }
+  };
 
   // Make the little buggers move about
   game.time.events.loop(interval, function() {        
@@ -88,27 +87,34 @@ function create() {
 
   game.physics.enable(stars, Phaser.Physics.ARCADE);
 
+  // =========== ASTEROIDS =============
   // Creating asteroids1 timer
-  game.time.events.repeat(Phaser.Timer.SECOND * 38, 10, createAsteroids1, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 2.5, createAsteroids1, this);
+  asteroids1 = game.add.group();
   // Creating asteroids2 timer
-  game.time.events.loop(Phaser.Timer.SECOND * 15, createAsteroids2, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 3.2, createAsteroids2, this);
+  asteroids2 = game.add.group();
 
-  // Creating the UFO's
-  for (var i = 0; i < ufosAmount; i++) {
-    ufos[i] = game.add.sprite(game.world.randomX, game.world.randomY, 'ufo');
-    ufos[i].anchor.set(0.5);
-    ufos[i].speed = game.rnd.between(50, 150);
-    ufos[i].force = game.rnd.between(5, 25);
-    game.physics.enable(ufos[i], Phaser.Physics.ARCADE);
-    ufos[i].body.allowRotation = false; 
-  };
+  game.time.events.loop(Phaser.Timer.SECOND * 5.6, createUfos, this);
+  ufos = game.add.group();
+
+  // ============== BULLETS ===============
+  bullets = game.add.group();
+  bullets.enableBody = true;
+  bullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+  bullets.createMultiple(40, 'bullet');
+  bullets.setAll('anchor.x', 0.5);
+  bullets.setAll('anchor.y', 0.5);
 
   // SCORES
   scoreText = game.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#FFFFFF' });
 
   // Enable keys to work
   cursors = game.input.keyboard.createCursorKeys();
+  game.input.keyboard.addKeyCapture([ Phaser.Keyboard.SPACEBAR ]);
 
+  // Game start 
   startButton = game.add.button(game.world.width*0.5, game.world.height*0.5, 'start', startGame, this, 1, 0, 2);
   startButton.anchor.set(0.5);
 
@@ -122,6 +128,11 @@ function update() {
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, ufos, gameOver, null, this);
+
+  // overlaps with bullets
+  game.physics.arcade.overlap(bullets, asteroids1, destroyAsteroid1, null, this);
+  game.physics.arcade.overlap(bullets, asteroids2, destroyAsteroid2, null, this);
+  game.physics.arcade.overlap(bullets, ufos, destroyUfos, null, this);
 
   if (playing) {
     // Controlling movements
@@ -142,7 +153,13 @@ function update() {
       blobSprite.body.angularVelocity = 0;
     }
 
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR)) {
+      fireBullet();
+    }
+
+    // Screen wrapping sprite and bullets
     screenWrap(blobSprite);
+    bullets.forEachExists(screenWrap, this);
 
     // Regenerating stars
     if (stars.length === 0) {
@@ -151,33 +168,8 @@ function update() {
         stars.create(game.world.randomX, game.world.randomY, 'star');
       }
     };
-
-    // Directing my evil ufos at their target
-    for(var i = 0; i < ufosAmount; i++){
-      // direction vector is the straight direction from the boid to the target
-      var direction = new Phaser.Point(blobSprite.x, blobSprite.y);
-      // now we subtract the current boid position
-      direction.subtract(ufos[i].x, ufos[i].y);
-      // then we normalize it. A normalized vector has its length is 1, but it retains the same direction
-      direction.normalize();
-      // time to set magnitude (length) to boid speed
-      direction.setMagnitude(ufos[i].speed);
-      // now we subtract the current boid velocity
-      direction.subtract(ufos[i].body.velocity.x, ufos[i].body.velocity.y);
-      // normalizing again
-      direction.normalize();
-      // finally we set the magnitude to boid force, which should be WAY lower than its velocity
-      direction.setMagnitude(ufos[i].force); 
-      // Now we add boid direction to current boid velocity
-      ufos[i].body.velocity.add(direction.x, direction.y);
-      // we normalize the velocity
-      ufos[i].body.velocity.normalize();
-      // we set the magnitue to boid speed
-      ufos[i].body.velocity.setMagnitude(ufos[i].speed);
-      ufos[i].angle = 180 + Phaser.Math.radToDeg(Phaser.Point.angle(ufos[i].position, new Phaser.Point(ufos[i].x + ufos[i].body.velocity.x, ufos[i].y + ufos[i].body.velocity.y)));
-    }
   };
-}
+};
 
 function screenWrap(blobSprite) {
 
@@ -208,10 +200,26 @@ function collectStar (player, star) {
   score += 10;
   scoreText.text = 'Score: ' + score;
 
-}
+};
 
+// Bullet firing function
+function fireBullet () {
+
+  if (game.time.now > bulletTime) {
+    var bullet = bullets.getFirstExists(false);
+
+    if (bullet) {
+      bullet.reset(blobSprite.body.x + 16, blobSprite.body.y + 16);
+      bullet.lifespan = 2000;
+      bullet.rotation = blobSprite.rotation;
+      game.physics.arcade.velocityFromRotation(blobSprite.rotation, 400, bullet.body.velocity);
+      bulletTime = game.time.now + 50;
+    }
+  }
+};
+
+// creating the floating asteroids
 function createAsteroids1() {
-  asteroids1 = game.add.group();
   var asteroid1 = asteroids1.create(game.world.randomX, game.world.randomY, 'asteroid1');
 
   // Make the little buggers move about
@@ -223,32 +231,65 @@ function createAsteroids1() {
   game.physics.enable(asteroids1, Phaser.Physics.ARCADE);
 };
 
+// Creating the shooting asteroids
 function createAsteroids2() {
-  asteroids2 = game.add.group();
   var asteroid2 = asteroids2.create(game.world.randomX, game.world.randomY, 'asteroid2');
 
   game.physics.enable(asteroids2, Phaser.Physics.ARCADE);
 
   // This shoots the object at the blob
-  asteroids2.forEachAlive(function(chase) {
-    game.physics.arcade.moveToObject(chase, {x: blobSprite.x, y: blobSprite.y}, 200, this);
+  asteroids2.forEachAlive(function(shoot) {
+    game.physics.arcade.moveToObject(shoot, {x: blobSprite.x, y: blobSprite.y}, 200, this);
   }, this);
 
 };
 
+// Creating the shooting ufos
+function createUfos() {
+  var ufo = ufos.create(game.world.randomX, game.world.randomY, 'ufo');
+
+  game.physics.enable(ufos, Phaser.Physics.ARCADE);
+
+  // This shoots the object at the blob
+  ufos.forEachAlive(function(shoot) {
+    game.physics.arcade.moveToObject(shoot, {x: blobSprite.x, y: blobSprite.y}, 200, this);
+  }, this);
+
+};
+
+
+function destroyAsteroid1(bullet, asteroid) {
+
+  console.log('destroy function called');
+  asteroid.destroy();
+
+};
+
+function destroyAsteroid2(bullet, asteroid) {
+
+  asteroid.destroy();
+
+};
+
+function destroyUfos(bullet, ufo) {
+
+  ufo.destroy();
+
+};
+
 function gameOver() {
-  // game.state.start('Game_Over');
+  console.log('game over');
   alert('You lost, game over!');
   location.reload();
+  playing = false;
 };
 
 function startGame() {
   startButton.destroy();
-  // ball.body.velocity.set(150, -150);
   playing = true;
 };
 
-// game.state.add('Game_Over', game_over);
+
 
 
 
