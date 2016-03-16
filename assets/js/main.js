@@ -22,10 +22,10 @@ var blobSprite;
 var asteroids1;
 var asteroids2;
 var stars;
+var ufos;
 // var bonusFood;
 
 // Bullets
-// var bullet;
 var bullets;
 var bulletTime = 0;
 
@@ -88,11 +88,14 @@ function create() {
 
   // =========== ASTEROIDS =============
   // Creating asteroids1 timer
-  game.time.events.loop(Phaser.Timer.SECOND * 3, createAsteroids1, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 2.5, createAsteroids1, this);
   asteroids1 = game.add.group();
   // Creating asteroids2 timer
-  game.time.events.loop(Phaser.Timer.SECOND * 5, createAsteroids2, this);
+  game.time.events.loop(Phaser.Timer.SECOND * 3.2, createAsteroids2, this);
   asteroids2 = game.add.group();
+
+  game.time.events.loop(Phaser.Timer.SECOND * 5.6, createUfos, this);
+  ufos = game.add.group();
 
   // ============== BULLETS ===============
   bullets = game.add.group();
@@ -123,10 +126,12 @@ function update() {
   game.physics.arcade.overlap(blobSprite, stars, collectStar, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids1, gameOver, null, this);
   game.physics.arcade.overlap(blobSprite, asteroids2, gameOver, null, this);
+  game.physics.arcade.overlap(blobSprite, ufos, gameOver, null, this);
 
   // overlaps with bullets
   game.physics.arcade.overlap(bullets, asteroids1, destroyAsteroid1, null, this);
   game.physics.arcade.overlap(bullets, asteroids2, destroyAsteroid2, null, this);
+  game.physics.arcade.overlap(bullets, ufos, destroyUfos, null, this);
 
   if (playing) {
     // Controlling movements
@@ -238,6 +243,20 @@ function createAsteroids2() {
 
 };
 
+// Creating the shooting ufos
+function createUfos() {
+  var ufo = ufos.create(game.world.randomX, game.world.randomY, 'ufo');
+
+  game.physics.enable(ufos, Phaser.Physics.ARCADE);
+
+  // This shoots the object at the blob
+  ufos.forEachAlive(function(shoot) {
+    game.physics.arcade.moveToObject(shoot, {x: blobSprite.x, y: blobSprite.y}, 200, this);
+  }, this);
+
+};
+
+
 function destroyAsteroid1(bullet, asteroid) {
 
   console.log('destroy function called');
@@ -248,6 +267,12 @@ function destroyAsteroid1(bullet, asteroid) {
 function destroyAsteroid2(bullet, asteroid) {
 
   asteroid.destroy();
+
+};
+
+function destroyUfos(bullet, ufo) {
+
+  ufo.destroy();
 
 };
 
